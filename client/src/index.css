@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+  --CornerSmall: 6px;
+}
+body {
+  background: var(--main-dark-blue, #0c0814);
+  color: #ffffff;
+  font-family: "Radio Canada", sans-serif;
+}
+.reg input::placeholder {
+  color: #000000; /* Placeholder text color */
+  font-size: 21px; /* Font size for placeholder */
+  font-weight: 700;
+  line-height: 25.2px;
+}
+
+.reg textarea::placeholder {
+  font-weight: 700;
+  line-height: 25.2px;
+  color: #000000;
+  font-size: 21px;
+}
+
+.main input::placeholder {
+  color: #efebf6; /* Placeholder text color */
+  font-size: 21px; /* Font size for placeholder */
+  font-weight: 700;
+  line-height: 25.2px;
+}
+
+.main textarea::placeholder {
+  font-weight: 700;
+  line-height: 25.2px;
+  color: #000000;
+  font-size: 21px;
+}
+.main input:focus {
+  outline: none;
+}
+
+/* Custom styles for the Select component */
+.custom-select .ant-select-selector {
+  color: #efebf6;
+  background-color: transparent !important;
+  border: none;
+}
+
+/* Hide the down arrow icon */
+.custom-select .ant-select-arrow {
+  display: none;
+}
+
+td,
+th {
+  border: 1px solid #ffffff;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 26.4px;
+
+}
