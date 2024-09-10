@@ -1,0 +1,8 @@
+client/node_modules
+client/dist
+server/node_modules
+server/.DS_Store
+client/.DS_Store
+/avatarkalar
+/Akfamakon_logo/.DS_Store
+server/.env
