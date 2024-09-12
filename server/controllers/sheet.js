@@ -37,7 +37,7 @@ export const createSheet = async (req, res, next) => {
 
     await log.save()
 
-    await flush()
+    flush()
 
     return res.status(201).send(sheet)
   } catch (error) {
@@ -84,14 +84,20 @@ export const getAllSheets = async (req, res, next) => {
       return res.status(200).json(cachedValue)
     }
 
-    const matchWorkspaces = { company }
+    const matchWorkspaces = { company: new mongoose.Types.ObjectId(company) }
 
     if (role?.access?.view === 'own') {
-      matchWorkspaces._id = { $in: role.access.workspaces || [] }
+      matchWorkspaces._id = {
+        $in:
+          role.access.workspaces.map((workspace) => {
+            return new mongoose.Types.ObjectId(workspace)
+          }) || [],
+      }
     }
 
     // Aggregation pipeline
-    const workspaces = await Workspace.aggregate([
+
+    const aggregation = [
       { $match: matchWorkspaces },
       { $sort: { order: 1 } },
       {
@@ -102,7 +108,7 @@ export const getAllSheets = async (req, res, next) => {
           as: 'sheets',
         },
       },
-      { $unwind: '$sheets' },
+      { $unwind: { path: '$sheets', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'columns',
@@ -111,7 +117,9 @@ export const getAllSheets = async (req, res, next) => {
           as: 'sheets.columns',
         },
       },
-      { $unwind: '$sheets.columns' },
+      {
+        $unwind: { path: '$sheets.columns', preserveNullAndEmptyArrays: true },
+      },
       {
         $lookup: {
           from: 'selects',
@@ -128,7 +136,7 @@ export const getAllSheets = async (req, res, next) => {
           as: 'sheets.tasks',
         },
       },
-      { $unwind: '$sheets.tasks' },
+      { $unwind: { path: '$sheets.tasks', preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: 'members',
@@ -160,10 +168,18 @@ export const getAllSheets = async (req, res, next) => {
       {
         $group: {
           _id: '$_id',
+          name: { $first: '$name' }, // Assuming you want to include 'name'
+          order: { $first: '$order' }, // Assuming you want to include 'order'
           sheets: { $push: '$sheets' },
         },
       },
-    ])
+    ]
+
+    console.log(aggregation)
+    const workspaces = await Workspace.aggregate(aggregation)
+
+    // Log results for debugging
+    console.log('Aggregated workspaces:', workspaces)
 
     setCache(key, workspaces)
 
