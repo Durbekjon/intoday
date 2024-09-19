@@ -4,39 +4,50 @@ import { GetSheetById } from '../services/getServices.js'
 import { createError } from '../utils/error.js'
 import { checkPlan } from '../middleware/plan.js'
 import mongoose from 'mongoose'
+
+// CREATE SHEET
 export const createSheet = async (req, res, next) => {
   try {
     const { workspace, name } = req.body
     const company = req.company
+
+    // Check if the plan allows creating a new sheet
     const plan = await checkPlan('sheet', company)
     if (plan) {
-      return res
-        .status(400)
-        .json({ message: 'You have reached the limit of your chosen plan!' })
+      return res.status(400).json({
+        message: 'You have reached the limit of your chosen plan!',
+      })
     }
+
+    // Create a new sheet
     const sheet = await new Sheet({
       name,
       workspace,
       company,
     }).save()
 
-    await Workspace.updateOne(
-      { _id: workspace },
-      { $push: { sheets: sheet._id } }
+    // Update the workspace to include the new sheet
+    const updated = await Workspace.findByIdAndUpdate(
+      workspace,
+      {
+        $push: { sheets: sheet._id },
+      },
+      { new: true }
     )
+    console.log(updated)
 
+    // Log the action
     const log = new Log({
       user: req.user._id,
       sheet: sheet._id,
       type: 'sheet',
       data: sheet,
       company,
-
       action: 'created sheet',
     })
-
     await log.save()
 
+    // Clear cache after creating a new sheet
     flush()
 
     return res.status(201).send(sheet)
@@ -46,28 +57,7 @@ export const createSheet = async (req, res, next) => {
   }
 }
 
-// export const getSheetsByWorkspace = async (req, res, next) => {
-//   try {
-//     const company = req.company
-//     const key = 'sheets/wsid/' + req.params.wsid
-
-//     const cachedValue = getCache(key)
-//     if (cachedValue) {
-//       return res.status(200).send(cachedValue)
-//     } else {
-//       const sheets = await Sheet.find({
-//         workspace: req.params.wsid,
-//         company,
-//       })
-//         .sort({ order: 1 })
-//         .select('-__v')
-//       setCache(key, sheets)
-//       return res.status(200).send(sheets)
-//     }
-//   } catch (error) {
-//     return next(createError(500, error.message))
-//   }
-// }
+// GET ALL SHEETS
 export const getAllSheets = async (req, res, next) => {
   try {
     const { company, user, role } = req
@@ -84,122 +74,70 @@ export const getAllSheets = async (req, res, next) => {
       return res.status(200).json(cachedValue)
     }
 
-    const matchWorkspaces = { company: new mongoose.Types.ObjectId(company) }
+    // Define the base query for finding workspaces
+    const workspaceQuery = { company: new mongoose.Types.ObjectId(company) }
 
+    // If the user has limited access (e.g., "own" view), apply the relevant workspace filters
     if (role?.access?.view === 'own') {
-      matchWorkspaces._id = {
+      workspaceQuery._id = {
         $in:
-          role.access.workspaces.map((workspace) => {
-            return new mongoose.Types.ObjectId(workspace)
-          }) || [],
+          role.access.workspaces.map(
+            (workspace) => new mongoose.Types.ObjectId(workspace)
+          ) || [],
       }
     }
 
-    // Aggregation pipeline
-
-    const aggregation = [
-      { $match: matchWorkspaces },
-      { $sort: { order: 1 } },
-      {
-        $lookup: {
-          from: 'sheets',
-          localField: 'sheets',
-          foreignField: '_id',
-          as: 'sheets',
-        },
-      },
-      { $unwind: { path: '$sheets', preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: 'columns',
-          localField: 'sheets.columns',
-          foreignField: '_id',
-          as: 'sheets.columns',
-        },
-      },
-      {
-        $unwind: { path: '$sheets.columns', preserveNullAndEmptyArrays: true },
-      },
-      {
-        $lookup: {
-          from: 'selects',
-          localField: 'sheets.columns.selects',
-          foreignField: '_id',
-          as: 'sheets.columns.selects',
-        },
-      },
-      {
-        $lookup: {
-          from: 'tasks',
-          localField: 'sheets.tasks',
-          foreignField: '_id',
-          as: 'sheets.tasks',
-        },
-      },
-      { $unwind: { path: '$sheets.tasks', preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: 'members',
-          localField: 'sheets.tasks.members',
-          foreignField: '_id',
-          as: 'sheets.tasks.members',
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'sheets.tasks.members.user',
-          foreignField: '_id',
-          as: 'sheets.tasks.members.user',
-        },
-      },
-      {
-        $addFields: {
-          'sheets.tasks.members.user': {
-            $arrayElemAt: ['$sheets.tasks.members.user', 0],
+    // Fetch workspaces with the relevant sheets, columns, and tasks populated
+    const workspaces = await Workspace.find(workspaceQuery) // <-- Fixed missing workspaceQuery here
+      .sort({ order: 1 }) // Sort the workspaces by order
+      .populate({
+        path: 'sheets',
+        populate: [
+          { path: 'columns', populate: { path: 'selects' } }, // Populate columns and their selects
+          {
+            path: 'tasks',
+            populate: [
+              { path: 'members', populate: { path: 'user' } }, // Populate task members and their user data
+            ],
           },
-        },
-      },
-      {
-        $match: {
-          'sheets.tasks.members.user._id': role?.access?.id,
-        },
-      },
-      {
-        $group: {
-          _id: '$_id',
-          name: { $first: '$name' }, // Assuming you want to include 'name'
-          order: { $first: '$order' }, // Assuming you want to include 'order'
-          sheets: { $push: '$sheets' },
-        },
-      },
-    ]
+        ],
+      })
+      .lean()
 
-    console.log(aggregation)
-    const workspaces = await Workspace.aggregate(aggregation)
-
-    // Log results for debugging
-    console.log('Aggregated workspaces:', workspaces)
-
+    if (role.type !== 'author') {
+      const filteredWorkspaces = workspaces.map((workspace) => {
+        workspace.sheets = workspace.sheets.filter((sheet) => {
+          return (
+            role === 'member' ||
+            sheet.tasks.some((task) =>
+              task.members.some(
+                (member) => member.user && member.user._id.equals(user._id)
+              )
+            )
+          )
+        })
+        return workspace
+      })
+      setCache(key, filteredWorkspaces)
+      return res.status(200).json(filteredWorkspaces)
+    }
     setCache(key, workspaces)
 
     return res.status(200).json(workspaces)
   } catch (error) {
     console.error(error)
-    if (error.name === 'ValidationError') {
-      return next(createError(400, 'Invalid request data.'))
-    }
-    return next(createError(500, 'An error occurred while fetching sheets.'))
+    return next(createError(500, error.message))
   }
 }
 
+// UPDATE SHEET
 export const updateSheetById = async (req, res, next) => {
   try {
     const { id } = req.params
     const company = req.company
     const { name } = req.body
-    const sheet = await GetSheetById(id)
 
+    const sheet = await GetSheetById(id)
     if (!sheet) {
       return next(createError(404, 'Sheet not found'))
     }
@@ -208,14 +146,14 @@ export const updateSheetById = async (req, res, next) => {
       return next(createError(403, "You don't have access"))
     }
 
+    // Update the sheet name
     const updatedSheet = await Sheet.findByIdAndUpdate(
       id,
       { name },
-      {
-        new: true,
-      }
+      { new: true }
     )
 
+    // Log the update
     const log = new Log({
       user: req.user._id,
       sheet: sheet._id,
@@ -224,10 +162,10 @@ export const updateSheetById = async (req, res, next) => {
       action: 'updated sheet',
       company,
     })
-
     await log.save()
 
-    await flush()
+    // Clear cache
+    flush()
 
     return res.status(200).send(updatedSheet)
   } catch (error) {
@@ -235,10 +173,12 @@ export const updateSheetById = async (req, res, next) => {
   }
 }
 
+// DELETE SHEET
 export const deleteSheetById = async (req, res, next) => {
   try {
     const _id = req.params.id
     const company = req.company
+
     const sheet = await Sheet.findOne({
       company,
       _id,
@@ -252,14 +192,19 @@ export const deleteSheetById = async (req, res, next) => {
       return next(createError(403, "You don't have access"))
     }
 
+    // Delete the sheet
     await Sheet.findByIdAndDelete(_id)
 
+    // Remove the sheet from the workspace
     await Workspace.updateOne(
       { _id: sheet.workspace },
       { $pull: { sheets: _id } }
     )
+
+    // Delete tasks associated with the sheet
     await Task.deleteMany({ sheet: _id })
 
+    // Log the deletion
     const log = new Log({
       user: req.user._id,
       sheet: _id,
@@ -267,10 +212,10 @@ export const deleteSheetById = async (req, res, next) => {
       action: 'deleted sheet',
       company,
     })
-
     await log.save()
 
-    await flush()
+    // Clear cache
+    flush()
 
     return res.status(200).send({ message: 'Sheet was deleted' })
   } catch (error) {
