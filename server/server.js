@@ -9,7 +9,7 @@ import path from 'path'
 const __dirname = path.resolve()
 app.use(express.urlencoded({ extended: false }))
 app.use(cors('*'))
-
+//
 import auth from './routes/auth.js'
 import plan from './routes/plan.js'
 import company from './routes/company.js'
