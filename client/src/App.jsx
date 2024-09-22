@@ -5,6 +5,9 @@ import ErrorPage from "./Components/ErrorPage";
 import Login from "./Pages/Auth/Login";
 import Register from "./Pages/Auth/Register";
 import WorkspaceDetails from "./Components/WorkspaceDetails";
+import Profile from "./Pages/Components/Profile";
+import Settings from "./Pages/Components/Settings";
+import SheetDetails from "./Components/SheetDetails";
 
 function App() {
   const router = createBrowserRouter([
@@ -28,7 +31,19 @@ function App() {
           element: <Home />,
         },
         {
-          path: "/home/:id",
+          path: "/home/profile",
+          element: <Profile />,
+        },
+        {
+          path: "/home/settings",
+          element: <Settings />,
+        },
+        {
+          path: "/home/:workspace",
+          element: <WorkspaceDetails />,
+        },
+        {
+          path: "/home/:workspace/:sheet",
           element: <WorkspaceDetails />,
         }
       ]

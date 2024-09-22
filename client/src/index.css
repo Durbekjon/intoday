@@ -9,6 +9,7 @@ body {
   color: #ffffff;
   font-family: "Radio Canada", sans-serif;
 }
+
 .reg input::placeholder {
   color: #000000; /* Placeholder text color */
   font-size: 21px; /* Font size for placeholder */
@@ -23,20 +24,20 @@ body {
   font-size: 21px;
 }
 
-.main input::placeholder {
+.mainn input::placeholder {
   color: #efebf6; /* Placeholder text color */
-  font-size: 21px; /* Font size for placeholder */
+  font-size: 16px; /* Font size for placeholder */
   font-weight: 700;
   line-height: 25.2px;
 }
 
-.main textarea::placeholder {
+.mainn textarea::placeholder {
   font-weight: 700;
   line-height: 25.2px;
   color: #000000;
   font-size: 21px;
 }
-.main input:focus {
+.mainn input:focus {
   outline: none;
 }
 
@@ -55,8 +56,45 @@ body {
 td,
 th {
   border: 1px solid #ffffff;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 400;
-  line-height: 26.4px;
+  line-height: 24.4px;
+  
 
+}
+
+/* Target the modal wrapper for background color */
+.custom-modal-wrapper .ant-modal-content {
+  background-color: #0c0814 !important; /* Change the modal's background color */
+  color: white; /* Ensure the text inside is white */
+  border: 1px solid #3c3c3c;
+}
+
+/* Target the title */
+.custom-modal-wrapper .ant-modal-header {
+  background-color: #0c0814 !important; /* Background color for the header */
+}
+
+.custom-modal-title {
+  color: white !important; /* Title color */
+  font-size: 18px; /* Customize font size if needed */
+}
+
+/* In your CSS file */
+.custom-select {
+  border: 1px solid #1F1E1E !important;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.custom-select .ant-select-selector {
+  border-color: #3c3c3c !important;
+}
+
+.anticon{
+  color: #ffffff;
+}
+
+.custom-select .ant-select-selection-placeholder {
+  color: rgb(164, 155, 155);
 }

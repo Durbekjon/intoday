@@ -1,35 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../axiosIn';
+import Sheet from './Sheet';
+import Header from '../Pages/Header';
+import SheetDetails from './SheetDetails';
+import { LuFileSpreadsheet } from 'react-icons/lu';
 
 const WorkspaceDetails = () => {
-  const { id } = useParams();  // Get the workspace ID from the URL
-  const [workspace, setWorkspace] = useState(null);
-
+  const { workspace, sheet } = useParams();
+  const [data, setData] = useState()
+  
   const fetchWorkspace = async () => {
     try {
-      const res = await axiosInstance.get(`/workspace/${id}`);
-      setWorkspace(res.data);
-      console.log(res.data);
+      const res = await axiosInstance.get(`/workspace/${workspace}`);
+      setData(res.data)
     } catch (error) {
       console.error('Error fetching workspace details:', error);
     }
   };
-  useEffect(() => {
-    // Fetch the workspace details when the component mounts
 
+  useEffect(() => {
     fetchWorkspace();
-  }, [id]);
+  }, [workspace]);
+
+  const sheetFilter = data ? data.sheets.find((data) => data._id === sheet) : null;
 
   if (!workspace) {
-    return <p>Loading...</p>;
+    return null;
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">{workspace.name}</h1>
-      <p>{workspace.description || 'No description available'}</p>
-    </div>
+    <>
+      <Header title={data?.name} workspace={workspace}/>
+      {data && <Sheet data={data?.sheets} workspace={workspace} fetchWorkspace={fetchWorkspace} />}
+      {sheetFilter ? (<SheetDetails sheet={sheetFilter} />) : (<div className="flex justify-center items-center h-[90vh] flex-col ">
+        <LuFileSpreadsheet className='text-[42px] mb-[10px]' />
+        <h1>There isn't selected sheet </h1>
+      </div>)}
+    </>
   );
 };
 

@@ -6,13 +6,13 @@ import Sidebar from './Sidebar'
 export default function Layout() {
     return (
         <>
-            <div className="flex min-h-screen">
-                <div className="basis-[20%] ">
+            <div className="flex w-full">
+                <div className="w-[334px] relative ">
                     <Sidebar />
                 </div>
-                <div className="basis-[80%]">
-                    <Header />
-                    <div className=" min-h-[100vh] p-[20px]">
+                <div className="w-full">
+                    {/* <Header/> */}
+                    <div className="main p-[20px]">
                         <Outlet />
                     </div>
                 </div>
