@@ -74,7 +74,18 @@ export const getOneWorkspace = async (req, res, next) => {
   try {
     const id = req.params.id
     const company = req.company
-    const workspace = await Workspace.findById(id).populate('sheets')
+    const workspace = await Workspace.findById(id) .populate({
+      path: 'sheets',
+      populate: [
+        { path: 'columns', populate: { path: 'selects' } }, // Populate columns and their selects
+        {
+          path: 'tasks',
+          populate: [
+            { path: 'members', populate: { path: 'user' } }, // Populate task members and their user data
+          ],
+        },
+      ],
+    })
 
     const role = req.role
 

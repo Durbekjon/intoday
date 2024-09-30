@@ -8,6 +8,7 @@ import WorkspaceDetails from "./Components/WorkspaceDetails";
 import Profile from "./Pages/Components/Profile";
 import Settings from "./Pages/Components/Settings";
 import SheetDetails from "./Components/SheetDetails";
+import SelectRole from "./Pages/SelectRole";
 
 function App() {
   const router = createBrowserRouter([
@@ -33,6 +34,10 @@ function App() {
         {
           path: "/home/profile",
           element: <Profile />,
+        },
+        {
+          path: "/home/selectrole",
+          element: <SelectRole />,
         },
         {
           path: "/home/settings",

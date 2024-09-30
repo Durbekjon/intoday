@@ -1,18 +1,20 @@
-import { Button, Dropdown, Modal, Select, Space } from 'antd';
+import { Button, Dropdown, Space } from 'antd';
 import React, { useState, useRef, useEffect } from 'react';
-import { BsPersonX } from 'react-icons/bs';
-import { FaAngleDown, FaChevronDown } from 'react-icons/fa';
+import { FaChevronDown } from 'react-icons/fa';
 import { FiUserPlus } from 'react-icons/fi';
 import { HiOutlineBell } from 'react-icons/hi';
-import { LuTrash, LuBellOff } from 'react-icons/lu';
+import { LuBellOff } from 'react-icons/lu';
 import { Link } from 'react-router-dom';
 import InviteModal from './Components/InviteModal';
+import axiosInstance from '../axiosIn';
+
 
 export default function Header({ title = "Weddings", workspace }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [data, setData] = useState([]);
   const profileMenuRef = useRef(null);
-  
+
   const toggleProfileMenu = () => {
     setShowProfileMenu(!showProfileMenu);
   };
@@ -46,30 +48,54 @@ export default function Header({ title = "Weddings", workspace }) {
     };
   }, []);
 
+
+  const fetchNotification = async () => {
+    try {
+      const res = await axiosInstance.get("/notification");
+      setData(res.data);
+    } catch (error) {
+      console.error('Error fetching data', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotification();
+  }, []);
+
   return (
     <>
-      <div className='w-full min-h-[102px]'>
-        <div className='top-0 min-h-[102px] border-b-[1px] bg-[#0C0814] border-b-[#1F1E1E] flex justify-between items-center'>
+      <div className='w-full min-h-[80px]'>
+        <div className='top-0 min-h-[80px] border-b-[1px] bg-[#0C0814] border-b-[#1F1E1E] flex justify-between items-center'>
           <div className='flex justify-start items-center'>
             <h1 className='font-[700] text-[22px] leading-[26.4px] text-[#8469B9] ml-[40px]'>
               {title}
             </h1>
           </div>
-          <div className='flex gap-[9px]'>
+          <div className='flex gap-3 justify-center items-start '>
             <Dropdown
               className="flex justify-center items-center bg-[#0c0814]"
               trigger={['click']}
               overlay={
-                <div className="p-3 bg-[#0c0814] border border-[#FFFF] rounded-lg flex flex-col justify-center items-center">
-                  <LuBellOff className="text-[24px] text-[#FFFF] mb-2" />
-                  <p className="text-[#FFFF] font-semibold text-[11px]">No notification</p>
-                </div>
-              }
+                data.length > 0 ? (
+                  <div className="p-3 bg-[#0c0814] border border-[#FFFF] text-[#FFFF] rounded-lg flex flex-col justify-center items-center">
+                    <div className='flex gap-[9px]'>
+                      {data.map((item, i) => (
+                        <div key={i}>{item._id}</div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#0c0814] border border-[#FFFF] rounded-lg flex flex-col justify-center items-center">
+                    <LuBellOff className="text-[24px] text-[#FFFF] mb-2" />
+                    <p className="text-[#FFFF] font-semibold text-[11px]">No notification</p>
+                  </div>
+                )}
+
               placement="bottomCenter"
             >
               <Space className="bg-[#0c0814]">
-                <div className="border-[1px] border-[#EFEBF6] rounded-[--CornerSmall] p-[12px] flex justify-center items-center max-h-[58px]">
-                  <HiOutlineBell className="text-[32px]" />
+                <div className="border-[1px] border-[#EFEBF6] rounded-[--CornerSmall] p-[10.5px] flex justify-center items-center max-h-[58px]">
+                  <HiOutlineBell className="text-[22px]" />
                 </div>
               </Space>
             </Dropdown>
@@ -81,23 +107,23 @@ export default function Header({ title = "Weddings", workspace }) {
                 color: '#FFFF',
                 borderRadius: 'var(--CornerSmall)',
                 display: 'flex',
-                gap: '17px',
+                gap: '12px',
                 padding: '12px 14px',
                 justifyContent: 'center',
                 alignItems: 'center',
-                minHeight: '58px',
-                fontSize: '18px',
+                minHeight: '45px',
+                fontSize: '16px',
                 fontWeight: 400,
                 lineHeight: '21px',
               }}
-              icon={<FiUserPlus style={{ fontSize: '28px' }} />}
+              icon={<FiUserPlus style={{ fontSize: '20px' }} />}
             >
               Invite
             </Button>
             <div className='relative' ref={profileMenuRef}>
               <div
                 onClick={toggleProfileMenu}
-                className='cursor-pointer border-[1px] border-[#EFEBF6] rounded-[--CornerSmall] flex justify-between items-center p-[14px_16px] max-h-[62px] gap-[23px]'
+                className='cursor-pointer border-[1px] border-[#EFEBF6] rounded-[--CornerSmall] flex justify-between items-center p-[14px_16px] max-h-[45px] gap-[23px]'
               >
                 <div>
                   <h1 className='font-[400] text-[18px] leading-[21px] text-[#EFEBF6]'>Baxrom Sidikov</h1>
@@ -114,8 +140,9 @@ export default function Header({ title = "Weddings", workspace }) {
                 <FaChevronDown className='text-[16px]' />
               </div>
               {showProfileMenu && (
-                <div className=' absolute right-0 mt-2 w-[200px] text-[#EFEBF6] border border-[#EFEBF6] rounded-[--CornerSmall] shadow-lg z-50 p-2'>
+                <div className='bg-[#0c0814] absolute right-0 mt-2 w-[200px] text-[#EFEBF6] border border-[#EFEBF6] rounded-[--CornerSmall] shadow-lg z-50 p-2'>
                   <Link to={"/home/profile"} className='block px-4 py-2 text-[#EFEBF6] rounded-lg hover:bg-[#170F28] duration-300'>Profile</Link>
+                  <Link to={"/home/selectrole"} className='block px-4 py-2 text-[#EFEBF6] rounded-lg hover:bg-[#170F28] duration-300'>Role</Link>
                   <Link to={"/home/settings"} className='block px-4 py-2 text-[#EFEBF6] rounded-lg hover:bg-[#170F28] duration-300'>Settings</Link>
                   <div className='block px-4 py-2 text-[#EFEBF6] rounded-lg hover:bg-[#ff3e3e]  duration-300'>Logout</div>
                 </div>
@@ -124,7 +151,7 @@ export default function Header({ title = "Weddings", workspace }) {
           </div>
         </div>
       </div>
-      <InviteModal title={title} isModalOpen={isModalOpen} handleOk={handleOk} handleCancel={handleCancel} handleChange={handleChange} workspace={workspace}/>
+      <InviteModal title={title} isModalOpen={isModalOpen} handleOk={handleOk} handleCancel={handleCancel} handleChange={handleChange} workspace={workspace} />
     </>
   );
 }

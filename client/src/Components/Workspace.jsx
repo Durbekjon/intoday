@@ -119,7 +119,6 @@ export default function Workspace() {
 
             {data.map((workspace, idx) => (
                 <div key={idx} className='relative'>
-
                     <NavLink
                         to={`/home/${workspace._id}`}
                         className={({ isActive }) =>

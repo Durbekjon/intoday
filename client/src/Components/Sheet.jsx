@@ -8,7 +8,7 @@ import { IoIosTrash } from 'react-icons/io';
 import { MdOutlineCreate } from "react-icons/md";
 
 
-export default function Sheet({ data, workspace, fetchWorkspace }) {
+export default function Sheet({ data, workspace, fetchWorkspace, getSheetById}) {
     const [open, setOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -18,7 +18,7 @@ export default function Sheet({ data, workspace, fetchWorkspace }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmittin, setIsSubmittin] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { sheet } = useParams();
+   
     const [activeMenu, setActiveMenu] = useState(null);
     const menuRef = useRef(null);
 
@@ -38,9 +38,7 @@ export default function Sheet({ data, workspace, fetchWorkspace }) {
             alert('Please enter a valid Sheet name');
             return;
         }
-
         const newSheetData = { workspace: workspace, name: newSheet };
-
         try {
             setIsSubmitting(true);
             await axiosInstance.post('/sheet', newSheetData);
@@ -62,7 +60,7 @@ export default function Sheet({ data, workspace, fetchWorkspace }) {
         }
 
         try {
-            setIsSubmitting(true);
+            (true);
             await axiosInstance.put(`/sheet/${editingSheet.id}`, { name: editingSheet.name });
             setEditOpen(false);
             setEditingSheet(null);
@@ -101,20 +99,21 @@ export default function Sheet({ data, workspace, fetchWorkspace }) {
     return (
         <>
             {loading && <p>Loading...</p>}
-            <div className='mt-3 mb-[10px] flex justify-start items-center'>
-                <div className='relative rounded-lg flex justify-center items-center p-[5px_12px] bg-[#170F28]'>
+            <div className='mt-3 mb-[10px] flex justify-start items-center '>
+                <div className='relative rounded-lg flex justify-center items-center p-[0px_5px] bg-[#170F28] ml-[15px]'>
                     {data.map((sheet, idx) => (
                         <div key={idx} className='relative'>
                             <NavLink
                                 to={`/home/${workspace}/${sheet._id}`}
                                 className={({ isActive }) =>
-                                    `text-[15px] rounded-lg p-[7px_8px] flex justify-center items-center gap-2 ${isActive ? "bg-[#0C0814]" : 'bg-[#170F28] text-[#FFFF]'}`}
+                                    `text-[13px] rounded-[4px] p-[2px_5px] flex justify-center items-center gap-2 ${isActive ? "bg-[#0C0814]" : 'bg-[#170F28] text-[#FFFF]'}`}
+                                onClick={()=> getSheetById(sheet._id)}
                             >
                                 {({ isActive }) => (
                                     <>
                                         {sheet.name}
                                         <BsThreeDotsVertical
-                                            className={`text-[15px] cursor-pointer ${isActive ? 'visible' : 'invisible'}`}
+                                            className={`text-[13px] cursor-pointer ${isActive ? 'visible' : 'invisible'}`}
                                             onClick={() => toggleMenu(sheet)}
                                         />
                                         {activeMenu === sheet && (
@@ -138,7 +137,7 @@ export default function Sheet({ data, workspace, fetchWorkspace }) {
                             </NavLink>
                         </div>
                     ))}
-                    <div className='text-[22px] p-[7px_10px] rounded-lg'>
+                    <div className='text-[14px] p-[8px_8px] rounded-lg'>
                         <TbSquareRoundedPlus onClick={() => setOpen(true)} />
                     </div>
                 </div>

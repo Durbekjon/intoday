@@ -102,7 +102,6 @@ export const getAllSheets = async (req, res, next) => {
           },
         ],
       })
-      .lean()
 
     if (role.type !== 'author') {
       const filteredWorkspaces = workspaces.map((workspace) => {

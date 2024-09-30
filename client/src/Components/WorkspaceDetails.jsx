@@ -9,7 +9,7 @@ import { LuFileSpreadsheet } from 'react-icons/lu';
 const WorkspaceDetails = () => {
   const { workspace, sheet } = useParams();
   const [data, setData] = useState()
-  
+
   const fetchWorkspace = async () => {
     try {
       const res = await axiosInstance.get(`/workspace/${workspace}`);
@@ -18,12 +18,17 @@ const WorkspaceDetails = () => {
       console.error('Error fetching workspace details:', error);
     }
   };
-
   useEffect(() => {
     fetchWorkspace();
   }, [workspace]);
 
-  const sheetFilter = data ? data.sheets.find((data) => data._id === sheet) : null;
+  function getSheetById(sheetId) {
+   const d = data ? data.sheets.find((data) => data._id === sheetId || sheet) : null
+   console.log(d)
+   return d;
+  }
+  const sheetFilter = getSheetById()
+  console.log(getSheetById());
 
   if (!workspace) {
     return null;
@@ -31,9 +36,9 @@ const WorkspaceDetails = () => {
 
   return (
     <>
-      <Header title={data?.name} workspace={workspace}/>
-      {data && <Sheet data={data?.sheets} workspace={workspace} fetchWorkspace={fetchWorkspace} />}
-      {sheetFilter ? (<SheetDetails sheet={sheetFilter} />) : (<div className="flex justify-center items-center h-[90vh] flex-col ">
+      <Header title={data?.name} workspace={workspace} />
+      {data && <Sheet data={data?.sheets} workspace={workspace} fetchWorkspace={fetchWorkspace} getSheetById={getSheetById} />}
+      {sheetFilter ? (<SheetDetails getSheetById={getSheetById} sheet={sheetFilter} />) : (<div className="flex justify-center items-center min-h-[70vh] flex-col ">
         <LuFileSpreadsheet className='text-[42px] mb-[10px]' />
         <h1>There isn't selected sheet </h1>
       </div>)}
